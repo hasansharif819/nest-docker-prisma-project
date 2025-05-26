@@ -1,7 +1,5 @@
-# Use Node.js 20 as base image
 FROM node:20-alpine
 
-# Set working directory
 WORKDIR /app
 
 # Install dependencies first for better caching
@@ -14,11 +12,11 @@ RUN npm install --include=dev
 # Install NestJS CLI globally
 RUN npm install -g @nestjs/cli
 
+# Generate Prisma client (but don't run migrations yet)
+RUN npx prisma generate
+
 # Copy the rest of the application
 COPY . .
-
-# Generate Prisma client
-RUN npx prisma generate
 
 # Build the application
 RUN npm run build
@@ -27,4 +25,4 @@ RUN npm run build
 EXPOSE 3000
 
 # Command to run the application with hot-reloading
-CMD ["npm", "run", "start:dev"]
+CMD ["sh", "-c", "npx prisma migrate dev --name update && npm run start:dev"]
