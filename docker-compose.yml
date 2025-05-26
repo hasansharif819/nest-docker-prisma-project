@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/dist
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=postgresql://sharif:password@db:5432/nestjs_db?schema=public
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    command: sh -c "npx prisma migrate deploy && npm run start:dev"
+
+  db:
+    image: postgres:15
+    environment:
+      - POSTGRES_USER=sharif
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=nestjs_db
+    ports:
+      - "5435:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sharif -d nestjs_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
